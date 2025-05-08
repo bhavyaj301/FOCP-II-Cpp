@@ -1,0 +1,101 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class Student {
+private:
+    string studentName;
+    int rollNo;
+    float studentCGPA;
+    vector<string> courseList;
+
+public:
+    // Default constructor
+    Student() {
+        studentName = "";
+        rollNo = 0;
+        studentCGPA = 0.0;
+    }
+
+    // Parameterized constructor
+    Student(string name, int r, float cgpa) {
+        studentName = name;
+        rollNo = r;
+        if (cgpa >= 0.0 && cgpa <= 10.0) {
+            studentCGPA = cgpa;
+        } else {
+            cout << "Invalid CGPA given, setting to 0.0 by default.\n";
+            studentCGPA = 0.0;
+        }
+    }
+
+    // Copy constructor
+    Student(const Student &s) {
+        studentName = s.studentName;
+        rollNo = s.rollNo;
+        studentCGPA = s.studentCGPA;
+        courseList = s.courseList;
+    }
+
+    // Destructor
+    ~Student() {
+        cout << "Deleting student: " << studentName << endl;
+    }
+
+    void addCourse(string course) {
+        if (course.length() > 1) {
+            courseList.push_back(course);
+        } else {
+            cout << "Course name too short.\n";
+        }
+    }
+
+    void updateCGPA(float newCGPA) {
+        if (newCGPA >= 0.0 && newCGPA <= 10.0) {
+            studentCGPA = newCGPA;
+        } else {
+            cout << "Invalid CGPA. Must be between 0 and 10.\n";
+        }
+    }
+
+    void showInfo() {
+        cout << "\n----- Student Info -----\n";
+        cout << "Name: " << studentName << endl;
+        cout << "Roll Number: " << rollNo << endl;
+        cout << "CGPA: " << studentCGPA << endl;
+
+        cout << "Courses: ";
+        if (courseList.empty()) {
+            cout << "No courses yet.\n";
+        } else {
+            for (int i = 0; i < courseList.size(); i++) {
+                cout << courseList[i];
+                if (i != courseList.size() - 1) cout << ", ";
+            }
+            cout << endl;
+        }
+    }
+};
+
+int main() {
+    // Creating a student using parameterized constructor
+    Student s1("Aman", 1201, 8.2);
+
+    // Adding courses
+    s1.addCourse("Physics");
+    s1.addCourse("Maths");
+
+    // Displaying details
+    s1.showInfo();
+
+    // Updating CGPA
+    s1.updateCGPA(9.0);
+    s1.showInfo();
+
+    // Trying wrong CGPA
+    s1.updateCGPA(11.5); // Will not update
+
+    return 0;
+}
