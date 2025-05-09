@@ -1,0 +1,234 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <stdexcept>
+using namespace std;
+
+// ---------------------- Exception Classes ----------------------
+
+// A base exception for the university system
+class UniversitySystemException : public exception {
+protected:
+    string message;
+public:
+    UniversitySystemException(string msg) : message(msg) {}
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+};
+
+// Specific exception for enrollment-related errors
+class EnrollmentException : public UniversitySystemException {
+public:
+    EnrollmentException(string msg) : UniversitySystemException(msg) {}
+};
+
+// Specific exception for grade-related errors
+class GradeException : public UniversitySystemException {
+public:
+    GradeException(string msg) : UniversitySystemException(msg) {}
+};
+
+// ---------------------- Base Person Class ----------------------
+
+class Person {
+protected:
+    string name;
+    int age;
+    string ID;
+    string contact;
+public:
+    Person() {}
+    Person(string n, int a, string id, string c) : name(n), age(a), ID(id), contact(c) {}
+
+    virtual void displayDetails() const {
+        cout << "Name: " << name << ", Age: " << age << ", ID: " << ID << ", Contact: " << contact << endl;
+    }
+
+    virtual double calculatePayment() const {
+        return 0.0; // Default implementation
+    }
+
+    virtual ~Person() {}
+};
+
+// ---------------------- Student Class (inherits Person) ----------------------
+
+class Student : public Person {
+protected:
+    string enrollmentDate;
+    string program;
+    float GPA;
+    vector<string> enrolledCourses;
+public:
+    Student() {}
+    Student(string n, int a, string id, string c, string ed, string prog, float gpa)
+        : Person(n, a, id, c), enrollmentDate(ed), program(prog), GPA(gpa) {}
+
+    void enrollInCourse(string course) {
+        enrolledCourses.push_back(course);
+    }
+
+    void updateGPA(float newGPA) {
+        if (newGPA < 0.0 || newGPA > 4.0)
+            throw GradeException("GPA must be between 0.0 and 4.0");
+        GPA = newGPA;
+    }
+
+    void displayDetails() const override {
+        Person::displayDetails();
+        cout << "Program: " << program << ", GPA: " << GPA << ", Enrolled Courses: ";
+        for (const auto& c : enrolledCourses) cout << c << " ";
+        cout << endl;
+    }
+};
+
+// ---------------------- Professor Class (inherits Person) ----------------------
+
+class Professor : public Person {
+protected:
+    string department;
+    string specialization;
+    string hireDate;
+public:
+    Professor(string n, int a, string id, string c, string dept, string spec, string hire)
+        : Person(n, a, id, c), department(dept), specialization(spec), hireDate(hire) {}
+
+    void displayDetails() const override {
+        Person::displayDetails();
+        cout << "Department: " << department << ", Specialization: " << specialization << endl;
+    }
+
+    double calculatePayment() const override {
+        return 50000.0; // Flat salary for simplicity
+    }
+};
+
+// ---------------------- Course Class ----------------------
+
+class Course {
+private:
+    string code, title, description;
+    int credits;
+    Professor* instructor;
+public:
+    Course(string c, string t, int cr, string d, Professor* p)
+        : code(c), title(t), credits(cr), description(d), instructor(p) {
+        if (credits <= 0)
+            throw invalid_argument("Course credits must be positive.");
+    }
+
+    void displayCourse() {
+        cout << "Course: " << title << " (" << code << "), Credits: " << credits << endl;
+        cout << "Taught by: ";
+        instructor->displayDetails();
+    }
+
+    string getCode() const {
+        return code;
+    }
+};
+
+// ---------------------- Department Class ----------------------
+
+class Department {
+private:
+    string name, location;
+    double budget;
+    vector<Professor*> professors;
+public:
+    Department(string n, string loc, double b) : name(n), location(loc), budget(b) {}
+
+    void addProfessor(Professor* prof) {
+        professors.push_back(prof);
+    }
+
+    void displayDepartment() {
+        cout << "Department: " << name << ", Location: " << location << ", Budget: " << budget << endl;
+        cout << "Faculty Members:\n";
+        for (auto* prof : professors)
+            prof->displayDetails();
+    }
+};
+
+// ---------------------- Enrollment Manager ----------------------
+
+class EnrollmentManager {
+private:
+    vector<pair<Student*, Course*>> enrollments;
+public:
+    void enrollStudent(Student* s, Course* c) {
+        enrollments.push_back({s, c});
+        s->enrollInCourse(c->getCode());
+    }
+
+    void showEnrollments() {
+        for (auto& e : enrollments) {
+            cout << "Student:\n";
+            e.first->displayDetails();
+            cout << " -> Enrolled in:\n";
+            e.second->displayCourse();
+            cout << endl;
+        }
+    }
+};
+
+// ---------------------- Main Program ----------------------
+
+int main() {
+    vector<Person*> people;
+    vector<Course*> courses;
+    vector<Department*> departments;
+
+    try {
+        // Create Professors
+        Professor* p1 = new Professor("Dr. Sharma", 45, "P001", "sharma@ncu.edu", "CSE", "AI", "2010-07-01");
+        Professor* p2 = new Professor("Dr. Gupta", 50, "P002", "gupta@ncu.edu", "ECE", "VLSI", "2008-01-15");
+
+        // Create Students
+        Student* s1 = new Student("Ananya", 20, "S101", "ananya@ncu.edu", "2023-08-01", "BTech", 3.7f);
+        Student* s2 = new Student("Rahul", 21, "S102", "rahul@ncu.edu", "2022-08-01", "BTech", 3.2f);
+
+        // Store all persons in one list
+        people.push_back(p1);
+        people.push_back(p2);
+        people.push_back(s1);
+        people.push_back(s2);
+
+        // Create Courses
+        Course* c1 = new Course("CS101", "Data Structures", 4, "Learn about stacks, queues, and trees", p1);
+        Course* c2 = new Course("EC202", "Analog Circuits", 3, "Learn about electronic components", p2);
+
+        courses.push_back(c1);
+        courses.push_back(c2);
+
+        // Create a Department
+        Department* d1 = new Department("Computer Science", "Block A", 2000000);
+        d1->addProfessor(p1);
+        departments.push_back(d1);
+
+        // Display System Info
+        cout << "\n======= University Management System =======\n\n";
+        for (auto* p : people) p->displayDetails();
+        for (auto* d : departments) d->displayDepartment();
+        for (auto* c : courses) c->displayCourse();
+
+        // Demonstrate Polymorphism
+        cout << "\n======= Polymorphism Demo =======\n";
+        for (Person* person : people) {
+            person->displayDetails();
+            cout << "Calculated Payment: Rs." << person->calculatePayment() << "\n\n";
+        }
+
+        // Clean up memory
+        for (auto* p : people) delete p;
+        for (auto* c : courses) delete c;
+        for (auto* d : departments) delete d;
+
+    } catch (exception& ex) {
+        cerr << "\nException occurred: " << ex.what() << endl;
+    }
+
+    return 0;
+}
+
